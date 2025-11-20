@@ -8,84 +8,118 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-    <!-- 👉 IMPORTANT : on charge le fichier contenant le GEOJSON -->
-    <script src="departements.js"></script>
-
     <style>
       html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
       #map { height: 100vh; width: 100%; }
 
+      /* LOGO */
       .logo-container {
-        position: fixed; top: 15px; right: 15px;
+        position: fixed;
+        top: 15px;
+        right: 15px;
         background: rgba(255, 255, 255, 0.9);
-        border-radius: 10px; padding: 6px 10px;
+        border-radius: 10px;
+        padding: 6px 10px;
         box-shadow: 0 0 6px rgba(0,0,0,0.25);
         z-index: 9999;
       }
       .logo-container img { height: 60px; background:white; padding:6px; border-radius:8px; }
 
+      /* LÉGENDE */
       .legend {
-        position: fixed; bottom: 15px; left: 15px;
-        z-index: 9999; background: rgba(255,255,255,0.95);
-        padding: 10px 12px; font-size: 13px;
-        border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.25);
+        position: fixed;
+        bottom: 15px;
+        left: 15px;
+        z-index: 9999;
+        background: rgba(255,255,255,0.95);
+        padding: 10px 12px;
+        font-size: 13px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.25);
         line-height: 1.6;
       }
-      .legend-marker { width: 14px; height: 14px; border-radius: 50%; border:2px solid white; display:inline-block; margin-right:6px; }
+      .legend-marker {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid white;
+        display: inline-block;
+        margin-right: 6px;
+      }
 
+      /* RECHERCHE */
       .search-container {
-        position: fixed; top: 15px; left: 15px; z-index: 9999; width: 260px;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 9999;
+        width: 260px;
       }
       .search-container input {
-        width: 100%; padding: 8px 10px; border-radius: 6px;
-        border: 1px solid #aaa; font-size: 14px; background:#fff;
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 1px solid #aaa;
+        font-size: 14px;
+        background:#fff;
       }
       .results-list {
         background: rgba(255,255,255,0.95);
-        max-height: 200px; overflow-y:auto;
-        border-radius: 6px; margin-top:4px;
+        max-height: 200px;
+        overflow-y: auto;
+        border-radius: 6px;
+        margin-top: 4px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-        display:none;
+        display: none;
       }
-      .result-item { padding:6px 10px; cursor:pointer; border-bottom:1px solid #eee; }
-      .result-item:hover { background:#f5f5f5; }
+      .result-item { padding: 6px 10px; cursor: pointer; border-bottom: 1px solid #eee; }
+      .result-item:hover { background: #f5f5f5; }
 
-      .popup-content { color:#000; font-size:13px; line-height:1.4; width:230px; }
+      /* POPUPS */
+      .popup-content { color:#000; font-size:13px; line-height:1.4; width: 230px; }
 
+      /* Splash */
       #splash-screen {
-        position:fixed; top:0; left:0; width:100%; height:100%;
-        background:rgba(0,0,0,0.85);
+        position: fixed; top:0; left:0; width:100%; height:100%;
+        background: rgba(0,0,0,0.85);
         display:flex; flex-direction:column; align-items:center; justify-content:center;
-        z-index:10000; transition:opacity 0.8s ease;
+        z-index: 10000; transition: opacity 0.8s ease; backdrop-filter: blur(4px);
       }
-      #splash-screen img { width:160px; margin-bottom:25px; }
-      #progress { margin-top:8px; font-size:15px; color:#ccc; font-weight:600; }
-      .progress-bar { width:250px; height:10px; background:rgba(255,255,255,0.2); border-radius:5px; margin-top:12px; overflow:hidden; }
-      .progress-bar-inner { height:100%; width:0%; background:#4caf50; transition: width 0.3s ease; }
+      #splash-screen img { width: 160px; margin-bottom: 25px; }
+      #progress { margin-top: 8px; font-size: 15px; color: #ccc; font-weight: 600; }
+      .progress-bar {
+        width: 250px; height: 10px; background: rgba(255,255,255,0.2);
+        border-radius: 5px; margin-top: 12px; overflow: hidden; box-shadow: inset 0 0 5px rgba(0,0,0,0.25);
+      }
+      .progress-bar-inner { height: 100%; width: 0%; background: #4caf50; transition: width 0.3s ease; }
     </style>
 </head>
 
 <body>
-
 <div id="map"></div>
 
+<!-- RECHERCHE -->
 <div class="search-container">
   <input type="text" id="searchInput" placeholder="🔍 Rechercher une agence..." />
   <div class="results-list" id="resultsList"></div>
 </div>
 
+<!-- LOGO HEXVIA -->
 <div class="logo-container">
   <img src="https://i.ibb.co/35w511m5/logo-hexvia.png" alt="Logo Hexvia" />
 </div>
 
+<!-- LÉGENDE -->
 <div class="legend">
   <b>Légende</b><br />
   <span class="legend-marker" style="background:#2e7d32;"></span> Intégrée<br />
   <span class="legend-marker" style="background:#1565c0;"></span> Franchisée<br />
   <span class="legend-marker" style="background:#424242;"></span> Demeseul<br /><br />
-  <b>Départements</b><br> Dégradé = nombre d’agences
+  <b>Départements</b><br>
+  Dégradé = nombre d’agences
 </div>
 
+<!-- Splash -->
 <div id="splash-screen">
   <img src="https://i.ibb.co/35w511m5/logo-hexvia.png" alt="Hexvia" />
   <p style="color:#fff;margin:0 0 8px;">Chargement des agences Hexvia...</p>
@@ -93,15 +127,13 @@
   <div class="progress-bar"><div class="progress-bar-inner" id="progressBarInner"></div></div>
 </div>
 
-<script src="/departements.js"></script>
-    
 <script>
-/* Airtable */
+/* Airtable API */
 const AIRTABLE_TOKEN = "patCagDMpXwNLGyQu.ed05d2b62289d165c562eed44a9e04b7f424b708179f288461a499caebe77ac4";
 const BASE_ID = "app5DoZKkIuqd6Quo";
 const TABLE_ID = "tblcLGQDcypZPFbZA";
 
-/* Map */
+/* Leaflet init */
 const map = L.map("map").setView([46.5, 2.5], 6);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
@@ -109,156 +141,210 @@ let markers = [];
 let deptCounts = {};
 let deptLayer = null;
 
-/* Marker */
-function buildIcon(type, note) {
-  let color = "#2e7d32";
+/* Marker stylé */
+function buildIcon(type, googleNote) {
   const t = (type || "").toLowerCase();
-  if (t.includes("franchise")) color="#1565c0";
-  if (t.includes("demeseul")) color="#424242";
-  const halo = note ? "box-shadow:0 0 8px rgba(255,215,0,0.9);" : "";
+  let color = "#2e7d32";
+  if (t.includes("franchise")) color = "#1565c0";
+  if (t.includes("demeseul")) color = "#424242";
+
+  const halo = googleNote ? "box-shadow:0 0 8px rgba(255,215,0,0.9);" : "";
+
   return L.divIcon({
-    html:`<div style="width:18px;height:18px;background:${color};border:2px solid #fff;border-radius:50%;${halo}"></div>`,
-    className:"", iconSize:[20,20], iconAnchor:[10,10]
+    html: `<div style="width:18px;height:18px;background:${color};border-radius:50%;border:2px solid #fff;${halo}"></div>`,
+    className: "",
+    iconSize: [20,20],
+    iconAnchor: [10,10],
+    popupAnchor: [0,-10],
   });
 }
 
-/* Departement code */
+/* Airtable loader */
+async function fetchAllRecords() {
+  const baseUrl = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`;
+  let offset = null;
+  const results = [];
+
+  do {
+    const url = new URL(baseUrl);
+    url.searchParams.set("pageSize", "100");
+    if (offset) url.searchParams.set("offset", offset);
+
+    const res = await fetch(url, { headers:{ Authorization:`Bearer ${AIRTABLE_TOKEN}` }});
+    const data = await res.json();
+
+    (data.records || []).forEach(r => results.push(r));
+    offset = data.offset;
+  } while (offset);
+
+  return results;
+}
+
+/* Département extraction */
 function getDepartmentFromCP(cp) {
   if (!cp) return null;
-  cp = cp.toString();
-  if (cp.startsWith("97")) return cp.slice(0,3);
-  return cp.slice(0,2);
+  cp = cp.toString().trim();
+  if (cp.startsWith("97")) return cp.substring(0,3);
+  return cp.substring(0,2);
 }
 
-/* Color scale */
+/* Dégradé color */
 function getDeptColor(count) {
   if (!count) return "#d4efdf";
+
   const max = Math.max(...Object.values(deptCounts));
   const ratio = count / max;
-  const start=[212,239,223], end=[46,125,50];
-  const r=Math.round(start[0]+(end[0]-start[0])*ratio);
-  const g=Math.round(start[1]+(end[1]-start[1])*ratio);
-  const b=Math.round(start[2]+(end[2]-start[2])*ratio);
-  return `rgb(${r},${g},${b})`;
+
+  const start = [212, 239, 223];
+  const end = [46, 125, 50];
+
+  const r = Math.round(start[0] + (end[0] - start[0]) * ratio);
+  const g = Math.round(start[1] + (end[1] - start[1]) * ratio);
+  const b = Math.round(start[2] + (end[2] - start[2]) * ratio);
+
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
-/* Dept layer */
+/* Ajout couche départements */
 function addDepartmentsLayer() {
-  if (!FR_DEPARTEMENTS_GEOJSON) return;
+  if (!window.FR_DEPARTEMENTS_GEOJSON) return;
+
   if (deptLayer) map.removeLayer(deptLayer);
 
-  deptLayer = L.geoJSON(FR_DEPARTEMENTS_GEOJSON, {
-    style: f => ({
-      color:"#333", weight:1, fillOpacity:0.55,
-      fillColor:getDeptColor(deptCounts[f.properties.code] || 0)
-    }),
-    onEachFeature:(f, layer)=>{
-      const code=f.properties.code;
-      const name=f.properties.nom;
-      const count=deptCounts[code] || 0;
-      layer.bindPopup(`<b>${name}</b><br>${code}<br>Agences : <b>${count}</b>`);
-      layer.on("mouseover",()=>layer.setStyle({weight:3}));
-      layer.on("mouseout",()=>layer.setStyle({weight:1}));
-    }
-  }).addTo(map);
-}
+  deptLayer = L.geoJSON(window.FR_DEPARTEMENTS_GEOJSON, {
+    style: (feature) => {
+      const code = feature.properties.code;
+      const count = deptCounts[code] || 0;
+      return {
+        color: "#333",
+        weight: 1,
+        fillOpacity: 0.55,
+        fillColor: getDeptColor(count),
+      };
+    },
+    onEachFeature: (feature, layer) => {
+      const code = feature.properties.code;
+      const name = feature.properties.nom;
+      const count = deptCounts[code] || 0;
 
-/* Load Airtable */
-async function fetchAllRecords() {
-  const results=[]; let offset=null;
-  do {
-    const url=new URL(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`);
-    url.searchParams.set("pageSize","100");
-    if(offset) url.searchParams.set("offset",offset);
-    const res=await fetch(url,{headers:{Authorization:`Bearer ${AIRTABLE_TOKEN}`}});
-    const data=await res.json();
-    results.push(...data.records);
-    offset=data.offset;
-  } while(offset);
-  return results;
+      layer.bindPopup(`
+        <b>${name}</b><br>
+        Département : ${code}<br>
+        Agences : <b>${count}</b>
+      `);
+
+      layer.on("mouseover", () => layer.setStyle({ weight: 3 }));
+      layer.on("mouseout", () => layer.setStyle({ weight: 1 }));
+    },
+  }).addTo(map);
 }
 
 /* MAIN */
 async function main() {
-  const splash=document.getElementById("splash-screen");
-  const progress=document.getElementById("progress");
-  const bar=document.getElementById("progressBarInner");
+  const splash = document.getElementById("splash-screen");
+  const progress = document.getElementById("progress");
+  const bar = document.getElementById("progressBarInner");
 
   const records = await fetchAllRecords();
   let done = 0;
 
   for (const rec of records) {
-    const f = rec.fields;
+    const f = rec.fields || {};
 
-    const lat=parseFloat(f["Latitude"]);
-    const lng=parseFloat(f["Longitude"]);
-    if (isNaN(lat)||isNaN(lng)) continue;
+    const lat = parseFloat(f["Latitude"]);
+    const lng = parseFloat(f["Longitude"]);
+    if (isNaN(lat) || isNaN(lng)) continue;
 
-    const name=f["AGENCE "] || f["AGENCE"] || "Sans nom";
-    const dept=getDepartmentFromCP(f["CODE POSTAL"]);
-    if (dept) deptCounts[dept]=(deptCounts[dept]||0)+1;
+    const name = f["AGENCE "] || f["AGENCE"] || "Sans nom";
+    const cp = f["CODE POSTAL"];
+    const dept = getDepartmentFromCP(cp);
+
+    if (dept) deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+
+    const address = f["ADRESSE-OK"] || "";
+    const type = f["TYPE AGENCE"] || "";
+    const type2 = f["TYPE 2"] || "";
+    const googleNote = f["note_google"] || null;
+    const googleAvis = f["URL Avis Google"] || null;
 
     const popupHTML = `
       <div class="popup-content">
         <strong>${name}</strong><br>
-        ${f["ADRESSE-OK"] || ""}<br>
-        ${f["note_google"] ? `⭐ ${f["note_google"]}/5<br>` : ""}
-        ${f["URL Avis Google"] ? `<a href="${f["URL Avis Google"]}" target="_blank">Voir les avis</a>` : ""}
+        ${address}<br>
+        ${googleNote ? `⭐ ${googleNote}/5<br>` : ""}
+        ${googleAvis ? `<a href="${googleAvis}" target="_blank">Voir les avis</a>` : ""}
       </div>
     `;
 
-    const marker = L.marker([lat,lng], {
-      icon:buildIcon(f["TYPE AGENCE"], f["note_google"])
-    }).addTo(map).bindPopup(popupHTML);
+    const marker = L.marker([lat, lng], {
+      icon: buildIcon(type, googleNote)
+    })
+    .addTo(map)
+    .bindPopup(popupHTML);
 
-    markers.push({name, marker});
+    markers.push({ name, type, type2, marker });
 
     done++;
-    const pct = Math.round(done / records.length * 100);
-    progress.textContent=pct+"%";
-    bar.style.width=pct+"%";
+    const pct = Math.round((done / records.length) * 100);
+    progress.textContent = pct + "%";
+    bar.style.width = pct + "%";
   }
 
-  splash.style.opacity=0;
-  setTimeout(()=>splash.remove(),1000);
-
-  addDepartmentsLayer();
+  setTimeout(() => splash.style.opacity = 0, 500);
+  setTimeout(() => splash.remove(), 1200);
 }
 
-main();
+/* ✔️ Chargement du GEOJSON AVANT TOUT */
+window.FR_DEPARTEMENTS_GEOJSON = null;
 
-/* Recherche */
-const searchInput=document.getElementById("searchInput");
-const resultsList=document.getElementById("resultsList");
+fetch("/departements-100m.geojson")
+  .then(res => {
+    if (!res.ok) throw new Error("Fetch GeoJSON failed");
+    return res.json();
+  })
+  .then(json => {
+    console.log("GeoJSON chargé !");
+    window.FR_DEPARTEMENTS_GEOJSON = json;
 
-searchInput.addEventListener("input",()=>{
-  const q=searchInput.value.trim().toLowerCase();
-  resultsList.innerHTML="";
-  if(!q) return resultsList.style.display="none";
+    addDepartmentsLayer(); // ← maintenant possible
+    main(); // ← lancé après chargement du GeoJSON
+  })
+  .catch(err => console.error("Erreur chargement GeoJSON :", err));
 
-  const filtered = markers.filter(m => m.name.toLowerCase().includes(q));
+/* Recherche agence */
+const searchInput = document.getElementById("searchInput");
+const resultsList = document.getElementById("resultsList");
 
-  if(filtered.length===0){
-    resultsList.innerHTML="<div class='result-item'>Aucune agence trouvée</div>";
-    resultsList.style.display="block"; return;
+searchInput.addEventListener("input", () => {
+  const q = searchInput.value.trim().toLowerCase();
+  resultsList.innerHTML = "";
+  if (!q) return resultsList.style.display = "none";
+
+  const filtered = markers.filter(m =>
+    m.name.toLowerCase().includes(q)
+  );
+
+  if (filtered.length === 0) {
+    resultsList.innerHTML = "<div class='result-item'>Aucune agence trouvée</div>";
+    resultsList.style.display = "block";
+    return;
   }
 
-  filtered.forEach(m=>{
-    const item=document.createElement("div");
-    item.className="result-item";
-    item.innerHTML=`<b>${m.name}</b>`;
-    item.onclick=()=>{
-      map.setView(m.marker.getLatLng(),13);
+  filtered.forEach(m => {
+    const item = document.createElement("div");
+    item.className = "result-item";
+    item.innerHTML = `<b>${m.name}</b>`;
+    item.onclick = () => {
+      map.setView(m.marker.getLatLng(), 13);
       m.marker.openPopup();
-      resultsList.style.display="none";
+      resultsList.style.display = "none";
     };
     resultsList.appendChild(item);
   });
 
-  resultsList.style.display="block";
+  resultsList.style.display = "block";
 });
 </script>
-
 </body>
-<!-- redeploy -->
 </html>
+
